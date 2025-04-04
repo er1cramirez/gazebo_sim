@@ -1,0 +1,81 @@
+# Overview
+This pages describes the changes in the planar move plugin in `gazebo_plugins` for ROS 2, including a migration guide.
+
+### Summary
+
+* All SDF parameters are now `snake_cased`
+* Use remapping argument to change default topics (`cmd_vel` and `odom`)
+* Odometry is directly acquired from Gazebo's ground truth
+* Functionality of publishing world-to-odom TF has been added
+* Apart from odom publish rate, the control loop rate can also be adjusted using `<update_rate>`
+* Publishing of odom and odom TF is optional. Can be controlled using `<publish_odom>` and `<publish_odom_tf>` respectively.
+* Co-variance of odom message can be set using `<covariance_x>`, `<covariance_y>` and `<covariance_yaw>`
+
+### SDF parameters
+
+| ROS 1 | ROS 2 |
+| ----- | ----- |
+| `odometryFrame` | `odometry_frame` |
+| `odometryRate` | `publish_rate` |
+| `commandTopic` | `<ros><remapping>cmd_vel:=custom_cmd_vel</remapping></ros>` |
+| `odometryTopic` | `<ros><remapping>odom:=custom_odom</remapping></ros>` |
+| `odometryFrame` | `odometry_frame` |
+| `robotBaseFrame` | `robot_base_frame` |
+| `robotNamespace` | :x: |
+
+### Example Migration
+
+#### ROS1
+```.xml
+    <plugin name="object_controller" filename="libgazebo_ros_planar_move.so">
+      <!-- Add a namespace -->
+      <robotNamespace>demo</robotNamespace>
+
+      <!-- Change the default topic -->
+      <commandTopic>custom_cmd_vel</commandTopic>
+      <odometryTopic>custom_odom</odometryTopic>
+
+      <!-- Set odom publish rate -->
+      <odometryRate>20.0</odometryRate>
+
+      <!-- Frame IDs -->
+      <odometryFrame>odom_demo</odometryFrame>
+      <robotBaseFrame>base_footprint</robotBaseFrame>
+    </plugin>
+```
+
+#### ROS2
+```.xml
+    <plugin name="object_controller" filename="libgazebo_ros_planar_move.so">
+
+      <ros>
+
+        <!-- Add a namespace -->
+        <namespace>/demo</namespace>
+
+        <!-- Remap the default topic -->
+        <remapping>cmd_vel:=custom_cmd_vel</remapping>
+        <remapping>odom:=custom_odom</remapping>
+
+      </ros>
+
+      <!-- Set control loop update rate -->
+      <update_rate>100</update_rate>
+      <!-- Set odom publish rate -->
+      <publish_rate>10</publish_rate>
+
+      <!-- Set if odom required -->
+      <publish_odom>true</publish_odom>
+      <publish_odom_tf>true</publish_odom_tf>
+
+      <!-- Frame IDs -->
+      <odometry_frame>odom_demo</odometry_frame>
+      <robot_base_frame>link</robot_base_frame>
+
+      <!-- Set odom covariance -->
+      <covariance_x>0.0001</covariance_x>
+      <covariance_y>0.0001</covariance_y>
+      <covariance_yaw>0.01</covariance_yaw>
+
+    </plugin>
+```
